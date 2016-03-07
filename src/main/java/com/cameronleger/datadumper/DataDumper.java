@@ -1,9 +1,9 @@
 package com.cameronleger.datadumper;
 
 
+import com.cameronleger.datadumper.exports.Generic;
 import com.cameronleger.datadumper.exports.IExport;
-import com.cameronleger.datadumper.exports.generic.Blocks;
-import com.cameronleger.datadumper.exports.generic.Items;
+import com.cameronleger.datadumper.exports.Jmc2Obj;
 import com.cameronleger.datadumper.model.BlockData;
 import com.cameronleger.datadumper.model.ItemData;
 import cpw.mods.fml.common.Mod;
@@ -44,8 +44,10 @@ public class DataDumper {
         List<ItemData> items = Data.itemsWithData();
 
         List<IExport> exporters = new ArrayList<IExport>();
-        exporters.add(new Blocks(blocks));
-        exporters.add(new Items(items));
+        exporters.add(new Generic.Blocks(blocks));
+        exporters.add(new Generic.Items(items));
+        exporters.add(new Jmc2Obj.Blocks(blocks));
+        exporters.add(new Jmc2Obj.TexSplit(blocks));
 
         for (IExport exporter : exporters) {
             String fileName = exporter.getFileName();

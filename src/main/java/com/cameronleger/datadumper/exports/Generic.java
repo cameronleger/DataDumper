@@ -82,6 +82,14 @@ public class Generic {
                     Helpers.addTextElement(doc, "local_name", "EXCEPTION", blockElement);
                 }
 
+                try {
+                    if (block.getRenderType() > 41)
+                        Helpers.addTextElement(doc, "render_type", String.valueOf(block.getRenderType()), blockElement);
+                } catch (Exception e) {
+                    System.out.println(String.format("Unable to get render_type for block %s", blockData.getId()));
+                    Helpers.addTextElement(doc, "render_type", "EXCEPTION", blockElement);
+                }
+
                 Element texturesElement = doc.createElement("textures");
                 blockElement.appendChild(texturesElement);
 

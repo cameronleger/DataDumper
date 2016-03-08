@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import scala.xml.Elem;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,6 +20,53 @@ public class Jmc2Obj {
     public static class Blocks implements IExport {
 
         private List<BlockData> blockDataList;
+
+        private static final int BLOCK_FLOWER = 1;
+        private static final int BLOCK_TORCH = 2;
+        private static final int BLOCK_FIRE = 3;
+        private static final int BLOCK_FLUID = 4;
+        private static final int BLOCK_REDSTONE_WIRE = 5;
+        private static final int BLOCK_CROPS = 6;
+        private static final int BLOCK_DOOR = 7;
+        private static final int BLOCK_LADDER = 8;
+        private static final int BLOCK_MINECART_TRACK = 9;
+        private static final int BLOCK_STAIRS = 10;
+        private static final int BLOCK_FENCE = 11;
+        private static final int BLOCK_LEVER = 12;
+        private static final int BLOCK_CACTUS = 13;
+        private static final int BLOCK_BED = 14;
+        private static final int BLOCK_REDSTONE_REPEATER = 15;
+        private static final int BLOCK_PISTON_BASE = 16;
+        private static final int BLOCK_PISTON_EXT = 17;
+        private static final int BLOCK_PANE = 18;
+        private static final int BLOCK_STEM = 19;
+        private static final int BLOCK_VINE = 20;
+        private static final int BLOCK_FENCE_GATE = 21;
+        private static final int BLOCK_LILYPAD = 23;
+        private static final int BLOCK_CAULDRON = 24;
+        private static final int BLOCK_BREWING_STAND = 25;
+        private static final int BLOCK_END_PORTAL_FRAME = 26;
+        private static final int BLOCK_DRAGON_EGG = 27;
+        private static final int BLOCK_COCOA = 28;
+        private static final int BLOCK_TRIPWIRE_SRC = 29;
+        private static final int BLOCK_TRIPWIRE = 30;
+        private static final int BLOCK_LOG = 31;
+        private static final int BLOCK_WALL = 32;
+        private static final int BLOCK_FLOWER_POT = 33;
+        private static final int BLOCK_BEACON = 34;
+        private static final int BLOCK_ANVIL = 35;
+        private static final int BLOCK_REDSTONE_DIODE = 36;
+        private static final int BLOCK_REDSTONE_COMPARATOR = 37;
+        private static final int BLOCK_HOPPER = 38;
+        private static final int BLOCK_QUARTZ = 39;
+        private static final int BLOCK_DOUBLE_PLANT = 40;
+        private static final int BLOCK_STAINED_GLASS = 41;
+
+        // Biomes-o-Plenty (perhaps not always unique?
+        private static final int BLOCK_BOP_FLOWER = 42;
+        private static final int BLOCK_BOP_FLOWER2 = 50;
+        private static final int BLOCK_BOP_FLOWER3 = 51;
+        private static final int BLOCK_BOP_DOUBLE_PLANT = 54;
 
         public Blocks(List<BlockData> blockDataList) {
             this.blockDataList = blockDataList;
@@ -78,41 +126,104 @@ public class Jmc2Obj {
 
                 blocksElement.appendChild(blockElement);
 
-                if (subBlocks.size() <= 1) {
+                Map<String, String> properties = getAdditionalProperties(blockData);
+                if (!properties.isEmpty()) {
+                    for (String key : properties.keySet()) {
+                        Helpers.addTextElement(doc, key, properties.get(key), blockElement);
+                    }
+
+                    // flower pots have a more complex system
+                    if (blockData.getBlock().getRenderType() == BLOCK_FLOWER_POT) {
+                        Element meshRootElement = doc.createElement("mesh");
+                        String[] fp = new String[]{
+                                "fp_empty",
+                                "fp_red_fl",
+                                "fp_yellow_fl",
+                                "fp_oak_sapl",
+                                "fp_spruce_sapl",
+                                "fp_birch_sapl",
+                                "fp_jungle_sapl",
+                                "fp_red_mush",
+                                "fp_brown_mush",
+                                "fp_cactus",
+                                "fp_dead_bush",
+                                "fp_fern"
+                        };
+                        for (int index = 0; index < fp.length; index++) {
+                            Element meshElement = doc.createElement("mesh");
+                            meshElement.setAttribute("data", String.valueOf(index));
+                            meshElement.appendChild(doc.createTextNode(
+                                    String.format("models/flowerpot.obj#%s", fp[index])));
+                            meshRootElement.appendChild(meshElement);
+                        }
+                        blockElement.appendChild(meshRootElement);
+                    }
+
+                    // anvils have a more complex system
+                    if (blockData.getBlock().getRenderType() == BLOCK_ANVIL) {
+                        Element meshRootElement = doc.createElement("mesh");
+
+                        Element meshElement = doc.createElement("mesh");
+                        meshElement.setAttribute("data", "0");
+                        meshElement.setAttribute("mask", "1");
+                        meshElement.appendChild(doc.createTextNode("models/anvil.obj"));
+                        meshRootElement.appendChild(meshElement);
+
+                        meshElement = doc.createElement("mesh");
+                        meshElement.setAttribute("data", "1");
+                        meshElement.setAttribute("mask", "1");
+                        Element rotateElement = doc.createElement("rotate");
+                        rotateElement.setAttribute("data", "1");
+                        rotateElement.setAttribute("mask", "1");
+                        Helpers.addTextElement(doc, "mesh", "models/anvil.obj", rotateElement);
+                        meshElement.appendChild(rotateElement);
+                        meshRootElement.appendChild(meshElement);
+
+                        blockElement.appendChild(meshRootElement);
+                    }
+
+                    if (blockData.getBlock().getRenderType() == BLOCK_END_PORTAL_FRAME) {
+                        Element meshRootElement = doc.createElement("mesh");
+
+                        Element meshElement = doc.createElement("mesh");
+                        meshElement.appendChild(doc.createTextNode("models/endportal_frame.obj#base"));
+                        meshRootElement.appendChild(meshElement);
+
+                        meshElement = doc.createElement("mesh");
+                        meshElement.setAttribute("data", "4");
+                        meshElement.setAttribute("mask", "4");
+                        meshElement.appendChild(doc.createTextNode("models/endportal_frame.obj#eye"));
+                        meshRootElement.appendChild(meshElement);
+
+                        blockElement.appendChild(meshRootElement);
+                    }
+                }
+
+                // condense all textures into one data-less material if possible
+                Map<Integer, String> damageTextureMap = new HashMap<Integer, String>();
+                for (ItemStack subBlock : subBlocks) {
+                    List<String> texturesList = TextureTools.getTexturesList(block, subBlock.getItemDamage());
+                    if (texturesList != null && !texturesList.isEmpty()) {
+                        damageTextureMap.put(subBlock.getItemDamage(), String.join(", ", texturesList));
+                    }
+                }
+                Set<String> uniqueTextures = new HashSet<String>(damageTextureMap.values());
+                if (uniqueTextures.size() == 1) {
+                    Helpers.addTextElement(doc, "materials",
+                            TextureTools.createUniqueTextureName(uniqueTextures.iterator().next()), blockElement);
+                } else if (subBlocks.size() <= 1) {
                     List<String> texturesList = TextureTools.getTexturesList(block);
                     if (texturesList != null && !texturesList.isEmpty()) {
-                        for (int index = 0; index < texturesList.size(); index++) {
-                            texturesList.set(index, TextureTools.createUniqueTextureName(texturesList.get(index)));
-                        }
-                        try {
-                            Helpers.addTextElement(doc, "materials", String.join(", ", texturesList), blockElement);
-                        } catch (Exception e) {
-                            System.out.println(String.format("Unable to get materials for block %s",
-                                    blockData.getId()));
-                            Helpers.addTextElement(doc, "materials", "EXCEPTION", blockElement);
-                        }
+                        Helpers.addTextElement(doc, "materials",
+                                TextureTools.createUniqueTextureName(String.join(", ", texturesList)), blockElement);
                     }
                 } else {
-                    Map<Integer, String> damageTextureMap = new HashMap<Integer, String>();
-                    for (ItemStack subBlock : subBlocks) {
-                        List<String> texturesList = TextureTools.getTexturesList(block, subBlock.getItemDamage());
-                        if (texturesList != null && !texturesList.isEmpty()) {
-                            damageTextureMap.put(subBlock.getItemDamage(), String.join(", ", texturesList));
-                        }
-                    }
-                    // condense all textures into one data-less material
-                    Set<String> uniqueTextures = new HashSet<String>(damageTextureMap.values());
-                    if (uniqueTextures.size() == 1) {
-                        Helpers.addTextElement(doc, "materials",
-                                TextureTools.createUniqueTextureName(uniqueTextures.iterator().next()), blockElement);
-                    } else {
-                        for (int damage = 0; damage < 16; damage++) {
-                            if (damageTextureMap.containsKey(damage)) {
-                                Element materialElement = Helpers.addTextElement(doc, "materials",
-                                        TextureTools.createUniqueTextureName(damageTextureMap.get(damage)),
-                                        blockElement);
-                                materialElement.setAttribute("data", String.valueOf(damage));
-                            }
+                    for (int damage = 0; damage < 16; damage++) {
+                        if (damageTextureMap.containsKey(damage)) {
+                            Element materialElement = Helpers.addTextElement(doc, "materials",
+                                    TextureTools.createUniqueTextureName(damageTextureMap.get(damage)),
+                                    blockElement);
+                            materialElement.setAttribute("data", String.valueOf(damage));
                         }
                     }
                 }
@@ -183,7 +294,7 @@ public class Jmc2Obj {
                 fileElement.setAttribute("name", texture.getFileName());
                 if (textureReferences.size() <= 1) {
                     fileElement.setAttribute("cols", "1");
-                    fileElement.setAttribute("rows", "*");
+                    fileElement.setAttribute("rows", "1");
                 } else {
                     int cols = 1;
                     int rows = 1;
@@ -218,7 +329,148 @@ public class Jmc2Obj {
         }
     }
 
-    // TODO: texture names (for IC2) can end with :0 where 0 is the column of the texture file they're in
+    private static Map<String, String> getAdditionalProperties(BlockData block) {
+        Map<String, String> properties = new HashMap<String, String>();
+
+        if (block.getUniqueId().equalsIgnoreCase("minecraft:chest")) {
+            properties.put("model", "Chest");
+        }
+
+        switch (block.getBlock().getRenderType()) {
+            case Blocks.BLOCK_TORCH:
+                properties.put("model", "Torch");
+                break;
+            case Blocks.BLOCK_FIRE:
+                properties.put("model", "Fire");
+                break;
+            case Blocks.BLOCK_FLUID:
+                properties.put("model", "Liquid");
+                break;
+            case Blocks.BLOCK_REDSTONE_WIRE:
+                properties.put("model", "RedstoneWire");
+                break;
+            case Blocks.BLOCK_FLOWER:
+            case Blocks.BLOCK_CROPS:
+            case Blocks.BLOCK_BOP_FLOWER:
+            case Blocks.BLOCK_BOP_FLOWER2:
+            case Blocks.BLOCK_BOP_FLOWER3:
+                properties.put("model", "Cross");
+                break;
+            case Blocks.BLOCK_DOOR:
+                properties.put("model", "Door");
+                break;
+            case Blocks.BLOCK_LADDER:
+                properties.put("model", "Ladder");
+                break;
+            case Blocks.BLOCK_MINECART_TRACK:
+                properties.put("model", "Rails");
+                break;
+            case Blocks.BLOCK_STAIRS:
+                properties.put("model", "Stairs");
+                break;
+            case Blocks.BLOCK_FENCE:
+                properties.put("model", "Fence");
+                break;
+            case Blocks.BLOCK_LEVER:
+                properties.put("model", "Lever");
+                break;
+            case Blocks.BLOCK_CACTUS:
+                properties.put("model", "Cactus");
+                break;
+            case Blocks.BLOCK_BED:
+                properties.put("model", "Bed");
+                break;
+            case Blocks.BLOCK_REDSTONE_REPEATER:
+                properties.put("model", "RedstoneRepeater");
+                break;
+            case Blocks.BLOCK_PISTON_BASE:
+                properties.put("model", "PistonBase");
+                break;
+            case Blocks.BLOCK_PISTON_EXT:
+                properties.put("model", "PistonArm");
+                break;
+            case Blocks.BLOCK_PANE:
+                properties.put("model", "Pane");
+                break;
+            case Blocks.BLOCK_STEM:
+                properties.put("model", "Stalk");
+                break;
+            case Blocks.BLOCK_VINE:
+                properties.put("model", "Vines");
+                break;
+            case Blocks.BLOCK_FENCE_GATE:
+                properties.put("model", "FenceGate");
+                break;
+            case Blocks.BLOCK_LILYPAD:
+                properties.put("model", "Lilypad");
+                break;
+            case Blocks.BLOCK_CAULDRON:
+                properties.put("model", "Mesh");
+                properties.put("mesh", "models/cauldron.obj");
+                break;
+            case Blocks.BLOCK_BREWING_STAND:
+                properties.put("model", "Mesh");
+                properties.put("mesh", "models/brewing_stand.obj");
+                break;
+            case Blocks.BLOCK_END_PORTAL_FRAME:
+                properties.put("model", "Mesh");
+                // the nested mesh happens elsewhere
+                break;
+            case Blocks.BLOCK_DRAGON_EGG:
+                properties.put("model", "Mesh");
+                properties.put("mesh", "models/enderdragon_egg.obj");
+                break;
+            case Blocks.BLOCK_COCOA:
+                properties.put("model", "CocoaPlant");
+                break;
+            case Blocks.BLOCK_TRIPWIRE_SRC:
+                properties.put("model", "TripwireHook");
+                break;
+            case Blocks.BLOCK_TRIPWIRE:
+                properties.put("model", "Tripwire");
+                break;
+            case Blocks.BLOCK_LOG:
+                properties.put("model", "WoodLog");
+                break;
+            case Blocks.BLOCK_WALL:
+                properties.put("model", "Wall");
+                break;
+            case Blocks.BLOCK_FLOWER_POT:
+                properties.put("model", "Mesh");
+                // the nested mesh happens elsewhere
+                break;
+            case Blocks.BLOCK_BEACON:
+                properties.put("model", "Mesh");
+                properties.put("mesh", "models/beacon.obj");
+                break;
+            case Blocks.BLOCK_ANVIL:
+                properties.put("model", "Mesh");
+                // the nested mesh happens elsewhere
+                break;
+            case Blocks.BLOCK_REDSTONE_DIODE: // unused? but possibly a repeater
+            case Blocks.BLOCK_REDSTONE_COMPARATOR:
+                properties.put("model", "RedstoneRepeater");
+                break;
+            case Blocks.BLOCK_HOPPER:
+                properties.put("model", "Mesh");
+                properties.put("mesh", "models/hopper.obj");
+                break;
+            case Blocks.BLOCK_QUARTZ:
+                properties.put("model", "Quartz");
+                break;
+            case Blocks.BLOCK_DOUBLE_PLANT:
+            case Blocks.BLOCK_BOP_DOUBLE_PLANT:
+                properties.put("model", "DoublePlant");
+                break;
+            case Blocks.BLOCK_STAINED_GLASS: // normal block
+                break;
+            default:
+                break;
+        }
+
+        return properties;
+    }
+
     private static class Texture {
         private String fileName;
         private List<TextureReference> textureReferences;
@@ -297,6 +549,64 @@ public class Jmc2Obj {
 
         private static List<String> getTexturesList(Block block, int damage) {
             List<String> allTextures = new ArrayList<String>();
+            List<String> textures = new ArrayList<String>();
+            int renderType = block.getRenderType();
+
+            // chests don't specify the right thing at all, do it manually
+            try {
+                if (block.getUnlocalizedName().equalsIgnoreCase("tile.chest")) {
+                    textures.add("chest/normal");
+                    textures.add("chest/normal_double");
+                    return textures;
+                }
+            } catch (Exception e) {
+                // oh well
+            }
+
+            // piston blocks don't specify the right thing at all, do it manually
+            if (renderType == Blocks.BLOCK_PISTON_BASE) {
+                textures.add("piston_top_normal");
+                textures.add("piston_top_normal");
+                textures.add("piston_side");
+                textures.add("piston_bottom");
+                return textures;
+            }
+            if (renderType == Blocks.BLOCK_PISTON_EXT) {
+                textures.add("piston_top_normal");
+                textures.add("piston_top_sticky");
+                textures.add("piston_side");
+                return textures;
+            }
+
+            // redstone wires don't specify the right thing at all, do it manually
+            if (renderType == Blocks.BLOCK_REDSTONE_WIRE) {
+                textures.add("redstone_dust_cross");
+                textures.add("redstone_dust_cross_overlay");
+                textures.add("redstone_dust_line");
+                textures.add("redstone_dust_line_overlay");
+                return textures;
+            }
+
+            // rails don't specify the right thing at all, do it manually
+            if (renderType == Blocks.BLOCK_MINECART_TRACK) {
+                textures.add("rail_normal");
+                textures.add("rail_normal_turned");
+                return textures;
+            }
+
+            // beds don't specify the right thing at all, do it manually
+            if (renderType == Blocks.BLOCK_BED) {
+                textures.add("bed_head_top");
+                textures.add("bed_head_side");
+                textures.add("bed_head_end");
+                textures.add("bed_feet_top");
+                textures.add("bed_feet_side");
+                textures.add("bed_feet_end");
+                return textures;
+            }
+
+            // check for all sides and add them if they appear
+            // note, it's unknown whether the sides are named correctly, but the order should be correct
             String[] sides = new String[] {"top", "bottom", "north", "south", "east", "west"};
             for (int index = 0; index < sides.length; index++) {
                 try {
@@ -310,16 +620,69 @@ public class Jmc2Obj {
                     allTextures.add("EXCEPTION");
                 }
             }
-            List<String> textures = new ArrayList<String>();
+
             // some modded blocks don't have textures setup
             if (allTextures.isEmpty()) {
                 return textures;
             }
+
+            // redstone repeaters need an additional material for the sides
+            if (textures.size() > 0 &&
+                    (renderType == Blocks.BLOCK_REDSTONE_REPEATER || renderType == Blocks.BLOCK_REDSTONE_COMPARATOR)) {
+                textures.add(1, "stone_slab_side");
+                return textures;
+            }
+
             // short-form for having the same material on all sides
             if (new HashSet<String>(allTextures).size() == 1) {
                 textures.add(allTextures.get(0));
+
+                // door blocks don't specify the top texture, but the Door model needs it
+                // so we do a little replacement
+                if (renderType == Blocks.BLOCK_DOOR) {
+                    textures.add(0, allTextures.get(0).replace("bottom", "top").replace("lower", "upper"));
+                }
+
+                // lever blocks don't specify the base texture, but the Lever model needs it
+                if (renderType == Blocks.BLOCK_LEVER) {
+                    textures.add("cobblestone");
+                }
+
+                // pane blocks don't specify the side texture, but the Pane model needs it
+                if (renderType == Blocks.BLOCK_PANE) {
+                    textures.add(textures.get(0));
+                }
+
+                // stem blocks don't specify the connected texture, but the Stalk model needs it
+                if (renderType == Blocks.BLOCK_STEM) {
+                    textures.add(0, textures.get(0).replace("dis", ""));
+                }
+
+                // cocoa blocks don't specify the other stage texture, but the Cocoa model needs it
+                if (renderType == Blocks.BLOCK_COCOA) {
+                    textures.add(0, textures.get(0).replace("2", "1"));
+                    textures.add(0, textures.get(0).replace("1", "0"));
+                }
+
+                // tripwire source blocks don't specify the other part textures, but the TripwireHook model needs it
+                if (renderType == Blocks.BLOCK_TRIPWIRE_SRC) {
+                    textures.add(textures.get(0).replace("_source", ""));
+                    textures.add(0, "planks_oak");
+                }
+
+                // some woodlog blocks don't specify the side part textures, but the WoodLog model needs it
+                if (renderType == Blocks.BLOCK_LOG) {
+                    textures.add(textures.get(0));
+                }
+
+                // some doubleplant blocks don't specify the top textures, but the DoublePlant model needs it
+                if (renderType == Blocks.BLOCK_DOUBLE_PLANT || renderType == Blocks.BLOCK_BOP_DOUBLE_PLANT) {
+                    textures.add(textures.get(0).replace("bottom", "top"));
+                }
+
                 return textures;
             }
+
             // short-form for having different materials for top/bottom and sides
             if (allTextures.get(0).equals(allTextures.get(1)) &&
                     allTextures.get(2).equals(allTextures.get(3)) &&
@@ -329,6 +692,7 @@ public class Jmc2Obj {
                 textures.add(allTextures.get(2));
                 return textures;
             }
+
             // short-form for having different materials for top and bottom and sides
             if (allTextures.get(2).equals(allTextures.get(3)) &&
                     allTextures.get(2).equals(allTextures.get(4)) &&
@@ -338,11 +702,15 @@ public class Jmc2Obj {
                 textures.add(allTextures.get(1));
                 return textures;
             }
+
             // something different for most sides
             return allTextures;
         }
 
         private static String convertBlockTextureNameToPath(String texture) {
+            if (texture != null && texture.startsWith("chest/")) {
+                return convertTextureNameToPath(texture, "entity");
+            }
             return convertTextureNameToPath(texture, "blocks");
         }
 

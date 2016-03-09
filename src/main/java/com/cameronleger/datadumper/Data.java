@@ -34,7 +34,6 @@ public class Data {
 
             // search for other metadata blocks not found with getSubItems
             Set<Integer> damageSet = new HashSet<Integer>();
-            damageSet.add(0);
             for (ItemStack foundSubBlock : subBlocks) {
                 damageSet.add(foundSubBlock.getItemDamage());
             }

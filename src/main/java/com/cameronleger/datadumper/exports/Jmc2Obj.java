@@ -6,7 +6,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import scala.xml.Elem;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -211,12 +210,16 @@ public class Jmc2Obj {
                 if (uniqueTextures.size() == 1) {
                     Helpers.addTextElement(doc, "materials",
                             TextureTools.createUniqueTextureName(uniqueTextures.iterator().next()), blockElement);
+
+                // for naturally data-less blocks, just add the one element
                 } else if (subBlocks.size() <= 1) {
                     List<String> texturesList = TextureTools.getTexturesList(block);
                     if (texturesList != null && !texturesList.isEmpty()) {
                         Helpers.addTextElement(doc, "materials",
                                 TextureTools.createUniqueTextureName(String.join(", ", texturesList)), blockElement);
                     }
+
+                // for data-rich blocks, loop over and add the data attribute
                 } else {
                     for (int damage = 0; damage < 16; damage++) {
                         if (damageTextureMap.containsKey(damage)) {
@@ -270,8 +273,9 @@ public class Jmc2Obj {
                 Block block = blockData.getBlock();
                 List<ItemStack> subBlocks = blockData.getSubBlocks();
 
-                for (ItemStack subBlock : subBlocks) {
-                    for (String textureName : TextureTools.getTexturesList(block, subBlock.getItemDamage())) {
+                // some blocks might not have related blocks, so add one with no metadata
+                if (subBlocks.isEmpty()) {
+                    for (String textureName : TextureTools.getTexturesList(block)) {
                         String textureFilePath = TextureTools.convertBlockTextureNameToPath(textureName);
                         Texture texture;
                         if (textures.containsKey(textureFilePath)) {
@@ -282,6 +286,21 @@ public class Jmc2Obj {
                         texture.addTextureReference(new TextureReference(textureName,
                                 TextureTools.getColumnFromTextureName(textureName)));
                         textures.put(textureFilePath, texture);
+                    }
+                } else {
+                    for (ItemStack subBlock : subBlocks) {
+                        for (String textureName : TextureTools.getTexturesList(block, subBlock.getItemDamage())) {
+                            String textureFilePath = TextureTools.convertBlockTextureNameToPath(textureName);
+                            Texture texture;
+                            if (textures.containsKey(textureFilePath)) {
+                                texture = textures.get(textureFilePath);
+                            } else {
+                                texture = new Texture(textureFilePath);
+                            }
+                            texture.addTextureReference(new TextureReference(textureName,
+                                    TextureTools.getColumnFromTextureName(textureName)));
+                            textures.put(textureFilePath, texture);
+                        }
                     }
                 }
             }
@@ -294,7 +313,12 @@ public class Jmc2Obj {
                 fileElement.setAttribute("name", texture.getFileName());
                 if (textureReferences.size() <= 1) {
                     fileElement.setAttribute("cols", "1");
-                    fileElement.setAttribute("rows", "1");
+                    // double chests are 128x64 and jMc2Obj will crash unless this is set
+                    if (texture.getFileName().contains("normal_double")) {
+                        fileElement.setAttribute("rows", "1");
+                    } else {
+                        fileElement.setAttribute("rows", "*");
+                    }
                 } else {
                     int cols = 1;
                     int rows = 1;
@@ -332,8 +356,23 @@ public class Jmc2Obj {
     private static Map<String, String> getAdditionalProperties(BlockData block) {
         Map<String, String> properties = new HashMap<String, String>();
 
-        if (block.getUniqueId().equalsIgnoreCase("minecraft:chest")) {
+        String uniqueId = block.getUniqueId();
+        if (uniqueId.equalsIgnoreCase("minecraft:grass") ||
+                uniqueId.equalsIgnoreCase("minecraft:dirt")) {
+            properties.put("model", "DirtGrass");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:chest")) {
             properties.put("model", "Chest");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:stone_button") ||
+                uniqueId.equalsIgnoreCase("minecraft:wooden_button")) {
+            properties.put("model", "Button");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:snow_layer")) {
+            properties.put("model", "Snow");
         }
 
         switch (block.getBlock().getRenderType()) {
@@ -551,6 +590,50 @@ public class Jmc2Obj {
             List<String> allTextures = new ArrayList<String>();
             List<String> textures = new ArrayList<String>();
             int renderType = block.getRenderType();
+
+            // dirt and grass need slight customization
+            try {
+                if (block.getUnlocalizedName().equalsIgnoreCase("tile.grass")) {
+                    textures.add("grass_top");
+                    textures.add("grass_side");
+                    textures.add("grass_side_snowed");
+                    textures.add("dirt");
+                    return textures;
+                }
+            } catch (Exception e) {
+                // oh well
+            }
+            try {
+                if (block.getUnlocalizedName().equalsIgnoreCase("tile.dirt")) {
+                    switch (damage) {
+                        case 0:
+                            textures.add("dirt");
+                            textures.add("dirt");
+                            textures.add("dirt");
+                            textures.add("dirt");
+                            break;
+                        case 1:
+                            textures.add("dirt");
+                            textures.add("dirt");
+                            textures.add("dirt");
+                            textures.add("dirt");
+                            break;
+                        case 2:
+                            textures.add("dirt_podzol_top");
+                            textures.add("dirt_podzol_side");
+                            textures.add("grass_side_snowed");
+                            textures.add("dirt");
+                            break;
+                        default:
+                            // nothing after this in normal jMc2Obj config, but let's try dirt
+                            textures.add("dirt");
+                            break;
+                    }
+                    return textures;
+                }
+            } catch (Exception e) {
+                // oh well
+            }
 
             // chests don't specify the right thing at all, do it manually
             try {

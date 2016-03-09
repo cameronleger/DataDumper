@@ -62,10 +62,10 @@ public class Jmc2Obj {
         private static final int BLOCK_STAINED_GLASS = 41;
 
         // Biomes-o-Plenty (perhaps not always unique?
-        private static final int BLOCK_BOP_FLOWER = 42;
-        private static final int BLOCK_BOP_FLOWER2 = 50;
-        private static final int BLOCK_BOP_FLOWER3 = 51;
+        private static final int BLOCK_BOP_FLOWER1 = 50;
+        private static final int BLOCK_BOP_FLOWER2 = 51;
         private static final int BLOCK_BOP_DOUBLE_PLANT = 54;
+        private static final int BLOCK_BOP_FLUID = 42;
 
         public Blocks(List<BlockData> blockDataList) {
             this.blockDataList = blockDataList;
@@ -382,6 +382,7 @@ public class Jmc2Obj {
             case Blocks.BLOCK_FIRE:
                 properties.put("model", "Fire");
                 break;
+            case Blocks.BLOCK_BOP_FLUID:
             case Blocks.BLOCK_FLUID:
                 properties.put("model", "Liquid");
                 break;
@@ -390,9 +391,8 @@ public class Jmc2Obj {
                 break;
             case Blocks.BLOCK_FLOWER:
             case Blocks.BLOCK_CROPS:
-            case Blocks.BLOCK_BOP_FLOWER:
+            case Blocks.BLOCK_BOP_FLOWER1:
             case Blocks.BLOCK_BOP_FLOWER2:
-            case Blocks.BLOCK_BOP_FLOWER3:
                 properties.put("model", "Cross");
                 break;
             case Blocks.BLOCK_DOOR:
@@ -690,7 +690,7 @@ public class Jmc2Obj {
 
             // check for all sides and add them if they appear
             // note, it's unknown whether the sides are named correctly, but the order should be correct
-            String[] sides = new String[] {"top", "bottom", "north", "south", "east", "west"};
+            String[] sides = new String[] {"bottom", "top", "north", "south", "east", "west"};
             for (int index = 0; index < sides.length; index++) {
                 try {
                     IIcon icon = block.getIcon(index, damage);
@@ -709,6 +709,12 @@ public class Jmc2Obj {
                 return textures;
             }
 
+            // jMc2Obj uses top, side, side, side, side, bottom
+            // so we have to move the bottom to the end
+            if (allTextures.size() == 6) {
+                allTextures.add(allTextures.remove(0));
+            }
+
             // redstone repeaters need an additional material for the sides
             if (textures.size() > 0 &&
                     (renderType == Blocks.BLOCK_REDSTONE_REPEATER || renderType == Blocks.BLOCK_REDSTONE_COMPARATOR)) {
@@ -719,6 +725,11 @@ public class Jmc2Obj {
             // short-form for having the same material on all sides
             if (new HashSet<String>(allTextures).size() == 1) {
                 textures.add(allTextures.get(0));
+
+                // but if it was liquid, it must have two
+                if (renderType == Blocks.BLOCK_FLUID || renderType == Blocks.BLOCK_BOP_FLUID) {
+                    textures.add(textures.get(0));
+                }
 
                 // door blocks don't specify the top texture, but the Door model needs it
                 // so we do a little replacement
@@ -767,22 +778,22 @@ public class Jmc2Obj {
             }
 
             // short-form for having different materials for top/bottom and sides
-            if (allTextures.get(0).equals(allTextures.get(1)) &&
-                    allTextures.get(2).equals(allTextures.get(3)) &&
-                    allTextures.get(2).equals(allTextures.get(4)) &&
-                    allTextures.get(2).equals(allTextures.get(5))) {
+            if (allTextures.get(0).equals(allTextures.get(5)) &&
+                    allTextures.get(1).equals(allTextures.get(2)) &&
+                    allTextures.get(1).equals(allTextures.get(3)) &&
+                    allTextures.get(1).equals(allTextures.get(4))) {
                 textures.add(allTextures.get(0));
-                textures.add(allTextures.get(2));
+                textures.add(allTextures.get(1));
                 return textures;
             }
 
             // short-form for having different materials for top and bottom and sides
-            if (allTextures.get(2).equals(allTextures.get(3)) &&
-                    allTextures.get(2).equals(allTextures.get(4)) &&
-                    allTextures.get(2).equals(allTextures.get(5))) {
+            if (allTextures.get(1).equals(allTextures.get(2)) &&
+                    allTextures.get(1).equals(allTextures.get(3)) &&
+                    allTextures.get(1).equals(allTextures.get(4))) {
                 textures.add(allTextures.get(0));
-                textures.add(allTextures.get(2));
                 textures.add(allTextures.get(1));
+                textures.add(allTextures.get(5));
                 return textures;
             }
 

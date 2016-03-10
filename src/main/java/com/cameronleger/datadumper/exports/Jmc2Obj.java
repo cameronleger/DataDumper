@@ -313,8 +313,11 @@ public class Jmc2Obj {
                 fileElement.setAttribute("name", texture.getFileName());
                 if (textureReferences.size() <= 1) {
                     fileElement.setAttribute("cols", "1");
-                    // double chests are 128x64 and jMc2Obj will crash unless this is set
-                    if (texture.getFileName().contains("normal_double")) {
+                    // double chests are 128x64
+                    // signs are 64x32
+                    // jMc2Obj will crash unless this is set
+                    if (texture.getFileName().contains("normal_double") ||
+                            texture.getFileName().contains("sign")) {
                         fileElement.setAttribute("rows", "1");
                     } else {
                         fileElement.setAttribute("rows", "*");
@@ -364,109 +367,188 @@ public class Jmc2Obj {
 
         if (uniqueId.equalsIgnoreCase("minecraft:chest")) {
             properties.put("model", "Chest");
+            properties.put("occlusion", "none");
         }
 
         if (uniqueId.equalsIgnoreCase("minecraft:stone_button") ||
                 uniqueId.equalsIgnoreCase("minecraft:wooden_button")) {
             properties.put("model", "Button");
+            properties.put("occlusion", "none");
         }
 
         if (uniqueId.equalsIgnoreCase("minecraft:snow_layer")) {
             properties.put("model", "Snow");
+            properties.put("occlusion", "snow");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:stone_slab") ||
+                uniqueId.equalsIgnoreCase("minecraft:wooden_slab")) {
+            properties.put("model", "Slab");
+            properties.put("occlusion", "none");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:standing_sign")) {
+            properties.put("model", "SignPost");
+            properties.put("occlusion", "none");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:wall_sign")) {
+            properties.put("model", "SignBoard");
+            properties.put("occlusion", "none");
+        }
+
+        try {
+            String unlocalizedName = block.getBlock().getUnlocalizedName();
+            if (unlocalizedName.equalsIgnoreCase("tile.pressurePlate") ||
+                    unlocalizedName.equalsIgnoreCase("tile.weightedPlate_light") ||
+                    unlocalizedName.equalsIgnoreCase("tile.weightedPlate_heavy")) {
+                properties.put("model", "PressurePlate");
+                properties.put("occlusion", "none");
+            }
+        } catch (Exception e) {
+            // oh well...
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:portal")) {
+            properties.put("model", "PortalVert");
+            properties.put("occlusion", "none");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:cake")) {
+            properties.put("model", "Mesh");
+            properties.put("mesh", "models/cake.obj");
+            properties.put("occlusion", "none");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:trapdoor")) {
+            properties.put("model", "Hatch");
+            properties.put("occlusion", "none");
+        }
+
+        if (uniqueId.equalsIgnoreCase("minecraft:carpet")) {
+            properties.put("model", "Carpet");
+            properties.put("occlusion", "none");
         }
 
         switch (block.getBlock().getRenderType()) {
             case Blocks.BLOCK_TORCH:
                 properties.put("model", "Torch");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_FIRE:
                 properties.put("model", "Fire");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_BOP_FLUID:
             case Blocks.BLOCK_FLUID:
                 properties.put("model", "Liquid");
+                properties.put("occlusion", "transparent");
                 break;
             case Blocks.BLOCK_REDSTONE_WIRE:
                 properties.put("model", "RedstoneWire");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_FLOWER:
             case Blocks.BLOCK_CROPS:
             case Blocks.BLOCK_BOP_FLOWER1:
             case Blocks.BLOCK_BOP_FLOWER2:
                 properties.put("model", "Cross");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_DOOR:
                 properties.put("model", "Door");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_LADDER:
                 properties.put("model", "Ladder");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_MINECART_TRACK:
                 properties.put("model", "Rails");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_STAIRS:
                 properties.put("model", "Stairs");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_FENCE:
                 properties.put("model", "Fence");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_LEVER:
                 properties.put("model", "Lever");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_CACTUS:
                 properties.put("model", "Cactus");
                 break;
             case Blocks.BLOCK_BED:
                 properties.put("model", "Bed");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_REDSTONE_REPEATER:
                 properties.put("model", "RedstoneRepeater");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_PISTON_BASE:
                 properties.put("model", "PistonBase");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_PISTON_EXT:
                 properties.put("model", "PistonArm");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_PANE:
                 properties.put("model", "Pane");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_STEM:
                 properties.put("model", "Stalk");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_VINE:
                 properties.put("model", "Vines");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_FENCE_GATE:
                 properties.put("model", "FenceGate");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_LILYPAD:
                 properties.put("model", "Lilypad");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_CAULDRON:
                 properties.put("model", "Mesh");
                 properties.put("mesh", "models/cauldron.obj");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_BREWING_STAND:
                 properties.put("model", "Mesh");
                 properties.put("mesh", "models/brewing_stand.obj");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_END_PORTAL_FRAME:
                 properties.put("model", "Mesh");
+                properties.put("occlusion", "none");
                 // the nested mesh happens elsewhere
                 break;
             case Blocks.BLOCK_DRAGON_EGG:
                 properties.put("model", "Mesh");
                 properties.put("mesh", "models/enderdragon_egg.obj");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_COCOA:
                 properties.put("model", "CocoaPlant");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_TRIPWIRE_SRC:
                 properties.put("model", "TripwireHook");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_TRIPWIRE:
                 properties.put("model", "Tripwire");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_LOG:
                 properties.put("model", "WoodLog");
@@ -476,14 +558,17 @@ public class Jmc2Obj {
                 break;
             case Blocks.BLOCK_FLOWER_POT:
                 properties.put("model", "Mesh");
+                properties.put("occlusion", "none");
                 // the nested mesh happens elsewhere
                 break;
             case Blocks.BLOCK_BEACON:
                 properties.put("model", "Mesh");
                 properties.put("mesh", "models/beacon.obj");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_ANVIL:
                 properties.put("model", "Mesh");
+                properties.put("occlusion", "none");
                 // the nested mesh happens elsewhere
                 break;
             case Blocks.BLOCK_REDSTONE_DIODE: // unused? but possibly a repeater
@@ -493,6 +578,7 @@ public class Jmc2Obj {
             case Blocks.BLOCK_HOPPER:
                 properties.put("model", "Mesh");
                 properties.put("mesh", "models/hopper.obj");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_QUARTZ:
                 properties.put("model", "Quartz");
@@ -500,6 +586,7 @@ public class Jmc2Obj {
             case Blocks.BLOCK_DOUBLE_PLANT:
             case Blocks.BLOCK_BOP_DOUBLE_PLANT:
                 properties.put("model", "DoublePlant");
+                properties.put("occlusion", "none");
                 break;
             case Blocks.BLOCK_STAINED_GLASS: // normal block
                 break;
@@ -635,6 +722,16 @@ public class Jmc2Obj {
                 // oh well
             }
 
+            // signs need a whole different material
+            try {
+                if (block.getUnlocalizedName().equalsIgnoreCase("tile.sign")) {
+                    textures.add("sign");
+                    return textures;
+                }
+            } catch (Exception e) {
+                // oh well
+            }
+
             // chests don't specify the right thing at all, do it manually
             try {
                 if (block.getUnlocalizedName().equalsIgnoreCase("tile.chest")) {
@@ -695,7 +792,12 @@ public class Jmc2Obj {
                 try {
                     IIcon icon = block.getIcon(index, damage);
                     if (icon != null) {
-                        allTextures.add(icon.getIconName());
+                        String iconName = icon.getIconName();
+                        // Biomes o Plenty leaves can be _fast, _fancy, or _round, but _fast by default
+                        if (iconName.endsWith("_fast")) {
+                            iconName = iconName.replace("_fast", "_fancy");
+                        }
+                        allTextures.add(iconName);
                     }
                 } catch (Exception e) {
                     System.out.println(String.format("Unable to get texture for block %s side %s",
@@ -802,7 +904,8 @@ public class Jmc2Obj {
         }
 
         private static String convertBlockTextureNameToPath(String texture) {
-            if (texture != null && texture.startsWith("chest/")) {
+            if (texture != null && (texture.startsWith("chest/") ||
+                    texture.equals("sign"))) {
                 return convertTextureNameToPath(texture, "entity");
             }
             return convertTextureNameToPath(texture, "blocks");

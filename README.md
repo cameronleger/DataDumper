@@ -11,4 +11,8 @@ Place the .jar in yours mods directory.
 
 ## Usage
 ### jMc2Obj
-The blocks.conf and texsplit_1.6.conf files can be used instead of the originals to export vanilla and modded blocks with textures. Note that the file is texsplit_1.6.conf however this actually works with 1.7.10 by default. This is not perfect, however it should get you well on your way to a modded export. Currently, anything that's not a normal block has to be hardcoded to export as such. Some blocks, such as saplings, can be matched automatically, but if I don't support the block yet, I'm sure you'll find it easy to modify the exported conf files. Finally, you'll need to make a texture pack where you insert all of the mods' folders (really, you can delete everything besides assets/*/textures/blocks) into a single .zip for jMc2Obj to load. It's best to use the single texture and single material options.
+The blocks.conf and texsplit_1.6.conf files can be used instead of the originals to export vanilla and modded blocks with textures. Note that the file is texsplit_1.6.conf however this actually works with 1.7.10 by default. This is not perfect, however it should get you well on your way to a modded export.
+
+Currently, anything that's not a normal block (such as custom meshes) has to be hardcoded to export as such, unless it uses a standard block render type or naming convention. I'm sure you'll find it easy to modify the exported conf files.
+
+Finally, you'll need to make a texture pack where you insert all of the mods' folders (really, you can delete everything besides assets/*/textures/blocks) into a single .zip for jMc2Obj to load. It's best to use the single texture and single material options.
